@@ -10,8 +10,8 @@ import Foundation
 
 class GameState {
     
-    var score: Int
-    var highScore: Int
+    var score: Float = 0
+    var highScore: Float = 0
     
     class var sharedInstance :GameState {
         struct Singleton {
@@ -29,7 +29,7 @@ class GameState {
         // Load game state
         let defaults = UserDefaults.standard
         
-        highScore = defaults.integer(forKey: "highScore")
+        highScore = defaults.float(forKey: "highScore")
     }
     
     func saveState() {

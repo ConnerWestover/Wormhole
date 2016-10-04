@@ -46,7 +46,6 @@ class GameViewController: UIViewController {
         // let reveal = SKTransition.crossFade(withDuration: 1)
         skView?.presentScene(gameScene!, transition: reveal)
     }
-
     
     override var shouldAutorotate: Bool {
         return true

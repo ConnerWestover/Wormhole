@@ -12,7 +12,7 @@ class GameOverScene: SKScene {
     let sceneManager:GameViewController
     
     // MARK: - initialization -
-    init(size: CGSize, scaleMode:SKSceneScaleMode, sceneManager: GameViewController){
+    init(size: CGSize, scaleMode:SKSceneScaleMode, sceneManager: GameViewController, score:Float){
         self.sceneManager = sceneManager
         super.init(size: size)
         self.scaleMode = scaleMode
@@ -27,29 +27,29 @@ class GameOverScene: SKScene {
         backgroundColor = SKColor.black
         // Score
         let lblScore = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
-        lblScore.fontSize = 60
+        lblScore.fontSize = 100
         lblScore.fontColor = SKColor.white
         lblScore.position = CGPoint(x: self.size.width / 2, y: size.height/2)
         lblScore.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.center
-        lblScore.text = String(format: "%d", GameState.sharedInstance.score)
+        lblScore.text = String(format: "You Scored: %.2f", GameState.sharedInstance.score)
         addChild(lblScore)
         
         // High Score
         let lblHighScore = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
-        lblHighScore.fontSize = 30
+        lblHighScore.fontSize = 50
         lblHighScore.fontColor = SKColor.cyan
         lblHighScore.position = CGPoint(x: self.size.width / 2, y: size.height/3)
         lblHighScore.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.center
-        lblHighScore.text = String(format: "High Score: %d", GameState.sharedInstance.highScore)
+        lblHighScore.text = String(format: "High Score: %.2f", GameState.sharedInstance.highScore)
         addChild(lblHighScore)
         
         // Try again
         let lblTryAgain = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
-        lblTryAgain.fontSize = 30
+        lblTryAgain.fontSize = 50
         lblTryAgain.fontColor = SKColor.white
         lblTryAgain.position = CGPoint(x: self.size.width / 2, y: 50)
         lblTryAgain.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.center
-        lblTryAgain.text = "Tap To Try Again"
+        lblTryAgain.text = "Tap To Return To Home"
         addChild(lblTryAgain)
 
         
