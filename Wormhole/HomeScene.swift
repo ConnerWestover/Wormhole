@@ -27,10 +27,11 @@ class HomeScene: SKScene {
     override func didMove(to view: SKView) {
         backgroundColor = SKColor.black
         
-        var starEmitter  = SKEmitterNode(fileNamed: "Stars2")!
+        let starEmitter  = SKEmitterNode(fileNamed: "Stars2")!
         starEmitter.position = CGPoint(x:self.size.width/2.0, y:self.size.height)
         starEmitter.particlePositionRange.dx = self.size.width
         starEmitter.zPosition = -5
+        starEmitter.advanceSimulationTime(5.0)
         addChild(starEmitter)
         
         let label = SKLabelNode(fontNamed: "Zapfino")

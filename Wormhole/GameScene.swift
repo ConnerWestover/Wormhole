@@ -103,6 +103,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.starEmitter.position = CGPoint(x:self.size.width/2.0, y:self.size.height)
         self.starEmitter.particlePositionRange.dx = self.size.width
         self.starEmitter.zPosition = -5
+        self.starEmitter.advanceSimulationTime(5.0)
         addChild(self.starEmitter)
         
         // Set contact delegate
@@ -168,10 +169,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let playerNode = SKNode()
         playerNode.position = CGPoint(x: self.size.width / 2, y: 400.0)
         
-        let sprite = SKSpriteNode(imageNamed: "Spaceship")
+        let sprite = SKSpriteNode(imageNamed: "Player")
         playerNode.name = "player"
-        sprite.xScale = 0.25
-        sprite.yScale = 0.25
+        //sprite.xScale = 0.25
+        //sprite.yScale = 0.25
         playerNode.addChild(sprite)
         
         //Setup Physics for Player
@@ -249,25 +250,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // add asteroids
     func addAsteroid(){
       if self.speed != 0{
-        let asteroid = SKSpriteNode(imageNamed: "asteroidSmall")
+        let x = random(min: 1, max: 4)
+        let asteroid = SKSpriteNode(imageNamed: "asteroid\(x)" )
 
         asteroid.zPosition = -4
         asteroid.name = "Asteroid"
         
         // Determine where to spawn the asteroid along the X axis
         let actualX = random(min: asteroid.size.width/2, max: size.width - asteroid.size.width/2)
-        
+        let endX = random(min: asteroid.size.width/2, max: size.width - asteroid.size.width/2)
         // Position the asteroid slightly off-screen,
         asteroid.position = CGPoint(x: actualX, y: size.height + asteroid.size.height/2)
         
         // Add the monster to the scene
         addChild(asteroid)
         
+        asteroid.xScale = 0.25
+        asteroid.yScale = 0.25
+        
         // Determine speed of the monster
         let actualDuration = 10.0
         
         // Create the actions
-        let actionMove = SKAction.move(to: CGPoint(x: actualX, y: -asteroid.size.height), duration: TimeInterval(actualDuration))
+        let actionMove = SKAction.move(to: CGPoint(x: endX, y: -asteroid.size.height), duration: TimeInterval(actualDuration))
         let actionMoveDone = SKAction.removeFromParent()
         
         asteroid.run(SKAction.sequence([actionMove, actionMoveDone]))
@@ -283,7 +288,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     // add aliens
     func addAliens(){
       if self.speed != 0{
-        let alien = SKSpriteNode(imageNamed: "spaceshipSmall")
+        let x = Int(random(min: 1, max: 5))
+        print(x)
+        let alien = SKSpriteNode(imageNamed: "alien\(x)")
         
         alien.xScale = 0.5
         alien.yScale = 0.5
@@ -415,15 +422,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if ((firstBody.categoryBitMask & PhysicsCategory.Player != 0) &&
             (secondBody.categoryBitMask == PhysicsCategory.EnemyProjectile)) {
+            if(firstBody.categoryBitMask != PhysicsCategory.Projectile){
             endGame()
+            }
         }
         
     }
     
     func projectileDidCollideWithMonster(_ projectile:SKSpriteNode, object:SKSpriteNode) {
+        
+        let node = SKEmitterNode(fileNamed: "Explosion")
+        node?.position = object.position
+        addChild(node!)
         projectile.removeFromParent()
         object.removeFromParent()
         score += 3
+        
+        
         
     }
 
