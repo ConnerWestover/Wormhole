@@ -15,8 +15,8 @@ class GameViewController: UIViewController {
     //MARK: - ivars -
     var gameScene: GameScene?
     var skView:SKView!
-    let showDebugData = true
-    let screenSize = CGSize(width: 1080, height: 1920)
+    let showDebugData = false
+    var screenSize = CGSize(width: 1080, height: 1920)
     let scaleMode = SKSceneScaleMode.aspectFill
     
     override func viewDidLoad() {
@@ -29,11 +29,15 @@ class GameViewController: UIViewController {
         skView.ignoresSiblingOrder = true
         skView.showsFPS = showDebugData
         skView.showsNodeCount = showDebugData
+        
+        if UIDevice.current.userInterfaceIdiom == UIUserInterfaceIdiom.pad {
+            screenSize = UIScreen.main.bounds.size
+        }
     }
     
     //MARK: - Scene Management -
     func loadHomeScene(){
-        let scene = HomeScene(size: screenSize, scaleMode:scaleMode, sceneManager: self)
+        let scene = HomeScene(size: CGSize(width: 1080, height: 1920), scaleMode:scaleMode, sceneManager: self)
         let reveal = SKTransition.crossFade(withDuration: 1)
         skView.presentScene(scene, transition:reveal)
     }

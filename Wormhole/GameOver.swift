@@ -34,6 +34,10 @@ class GameOverScene: SKScene {
         lblScore.text = String(format: "You Scored: %.2f", GameState.sharedInstance.score)
         addChild(lblScore)
         
+        if UIDevice.current.userInterfaceIdiom == UIUserInterfaceIdiom.pad {
+            lblScore.fontSize = 70
+        }
+        
         // High Score
         let lblHighScore = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
         lblHighScore.fontSize = 50
