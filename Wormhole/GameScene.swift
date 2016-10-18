@@ -171,16 +171,36 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         player = createPlayer()
         addChild(player)
         
+        let moreAsteroids = SKAction.run{
+            self.addAsteroid()
+            if (self.score > 50){
+                self.addAsteroid()
+            }
+            if (self.score > 200){
+                self.addAsteroid()
+            }
+        }
+        
+        let moreAliens = SKAction.run{
+            self.addAliens()
+            if (self.score > 100){
+                self.addAliens()
+            }
+            if (self.score > 250){
+                self.addAliens()
+            }
+        }
+        
         run(SKAction.repeatForever(
             SKAction.sequence([
-                SKAction.run(addAsteroid),
+                moreAsteroids,
                 SKAction.wait(forDuration: 3.0)
                 ])
         ))
         
         run(SKAction.repeatForever(
             SKAction.sequence([
-                SKAction.run(addAliens),
+                moreAliens,
                 SKAction.wait(forDuration: 8.0)
                 ])
         ))
@@ -421,7 +441,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let bullet = SKSpriteNode(imageNamed: "bullet")
             
             bullet.position = node.position
-            bullet.position.y = bullet.position.y - 200
+            //bullet.position.y = bullet.position.y - 200
             bullet.zPosition = -4
             bullet.xScale = 0.125
             bullet.yScale = -0.125
@@ -543,69 +563,64 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // add aliens
     func addAliens(){
-      if self.speed != 0{
-        
-        var z = 1
-        
-        if(score > 50){
-            z = 2
-        }else if score > 125{
-            z = 3
-        }else if score > 250{
-            z = 4
-        }
-        
-        let x = Int(arc4random_uniform(UInt32(z)))
-        print(x)
-        
-        let alien = SKSpriteNode(imageNamed: "alien\(x)")
-        
-        if x == 0{
-            alien.zPosition = 1
-        }else if x == 1{
-            alien.zPosition = 2
-        }else if x == 2{
-            alien.zPosition = 3
-        }else if x == 3{
-            alien.zPosition = 4
-        }
-
-        alien.xScale = 0.5
-        alien.yScale = 0.5
-        
-        alien.zPosition = -4
-        alien.name = "Alien"
-        
-        alien.physicsBody = SKPhysicsBody(rectangleOf: alien.size) // 1
-        alien.physicsBody?.isDynamic = false // 2
-        alien.physicsBody?.categoryBitMask = PhysicsCategory.Enemy // 3
-        alien.physicsBody?.contactTestBitMask = PhysicsCategory.Projectile // 4
-        alien.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
-        
-        // Determine where to spawn the monster along the X axis
-        let actualX = random(min: alien.size.width/2, max: size.width - alien.size.width/2)
-        
-        // Position the monster slightly off-screen along the right edge,
-        // and along a random position along the Y axis as calculated above
-        alien.position = CGPoint(x: actualX, y: size.height + alien.size.height)
-        
-        // Add the monster to the scene
-        addChild(alien)
-        
-        // Determine speed of the monster
-        
-        
-        // Create the actions
-        let actualDuration = 4
-        
-        let actionShoot = SKAction.run {
-            self.createEnemyBullet(node: alien)
-        }
-        let actionMoveOne = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: size.height/3 * 2), duration: TimeInterval(actualDuration))
-        let actionMoveTwo = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: size.height/3), duration: TimeInterval(actualDuration))
-        let actionMoveThree = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: -alien.size.height), duration: TimeInterval(actualDuration))
-        let actionMoveDone = SKAction.removeFromParent()
-        alien.run(SKAction.group([SKAction.sequence([actionMoveOne, actionMoveTwo, actionMoveThree, actionMoveDone]), SKAction.repeatForever( SKAction.sequence([actionShoot, SKAction.wait(forDuration: 2.0)]))]))
+        if self.speed != 0{
+            var z = 1
+            if(score > 50){
+                z = 2
+            }else if score > 125{
+                z = 3
+            }else if score > 250{
+                z = 4
+            }
+            
+            let x = Int(arc4random_uniform(UInt32(z)))
+            
+            let alien = SKSpriteNode(imageNamed: "alien\(x)")
+            
+            if x == 0{
+                alien.zPosition = 1
+            }else if x == 1{
+                alien.zPosition = 2
+            }else if x == 2{
+                alien.zPosition = 3
+            }else if x == 3{
+                alien.zPosition = 4
+            }
+            
+            
+            
+            alien.xScale = 0.5
+            alien.yScale = 0.5
+            
+            alien.name = "Alien"
+            
+            alien.physicsBody = SKPhysicsBody(rectangleOf: alien.size) // 1
+            alien.physicsBody?.isDynamic = false // 2
+            alien.physicsBody?.categoryBitMask = PhysicsCategory.Enemy // 3
+            alien.physicsBody?.contactTestBitMask = PhysicsCategory.Projectile // 4
+            alien.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
+            
+            // Determine where to spawn the monster along the X axis
+            let actualX = random(min: alien.size.width/2, max: size.width - alien.size.width/2)
+            
+            // Position the monster slightly off-screen along the right edge,
+            // and along a random position along the Y axis as calculated above
+            alien.position = CGPoint(x: actualX, y: size.height + alien.size.height)
+            
+            // Add the monster to the scene
+            addChild(alien)
+            
+            // Create the actions
+            let actualDuration = 4
+            
+            let actionShoot = SKAction.run {
+                self.createEnemyBullet(node: alien)
+            }
+            let actionMoveOne = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: size.height/3 * 2), duration: TimeInterval(actualDuration))
+            let actionMoveTwo = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: size.height/3), duration: TimeInterval(actualDuration))
+            let actionMoveThree = SKAction.move(to: CGPoint(x: random(min: 0, max: size.width), y: -alien.size.height), duration: TimeInterval(actualDuration))
+            let actionMoveDone = SKAction.removeFromParent()
+            alien.run(SKAction.group([SKAction.sequence([actionMoveOne, actionMoveTwo, actionMoveThree, actionMoveDone]), SKAction.repeatForever( SKAction.sequence([actionShoot, SKAction.wait(forDuration: 2.0)]))]))
         }
     }
     
@@ -685,17 +700,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             firstBody = contact.bodyB
             secondBody = contact.bodyA
         }
-
-        
+        if(firstBody.node == nil || secondBody.node == nil){
+         return
+        }
         if ((firstBody.categoryBitMask & PhysicsCategory.Enemy != 0) &&
             (secondBody.categoryBitMask & PhysicsCategory.Projectile != 0)) {
-            score += 3
             if firstBody.node?.name == "Alien"{
                 firstBody.node?.zPosition -= 1
                 if (firstBody.node?.zPosition)! <= CGFloat(0.0) {
                     projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
                 } else {
                     secondBody.node?.removeFromParent()
+                    score += 3
                 }
             }else if firstBody.node?.name == "Asteroid"{
                 projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
@@ -706,6 +722,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             (secondBody.categoryBitMask == PhysicsCategory.Enemy)) {
             if !playerShield {
             playerHealth -= 1
+            bulletNumber -= 1
+                if bulletNumber < 1 {
+                 bulletNumber = 1
+                }
+            fireRate += 0.1
             run(SKAction.playSoundFileNamed("damaged.mp3", waitForCompletion: false))
             secondBody.node?.removeFromParent()
             if playerHealth == 0{
@@ -721,6 +742,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if(firstBody.categoryBitMask != PhysicsCategory.Projectile){
               if !playerShield {
                 playerHealth -= 1
+                bulletNumber -= 1
+                if bulletNumber < 1 {
+                    bulletNumber = 1
+                }
+                fireRate += 0.1
                 run(SKAction.playSoundFileNamed("damaged.mp3", waitForCompletion: false))
                 secondBody.node?.removeFromParent()
                 if playerHealth == 0{
@@ -740,7 +766,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func activatePowerUp(node:SKSpriteNode){
         run(SKAction.playSoundFileNamed("powerup.mp3", waitForCompletion: false))
-        print(node.alpha)
         if node.alpha == 1{
             playerHealth += 1
             if playerHealth > 3{
@@ -753,7 +778,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 fireRate = 0.05
             }
         }
-        if node.alpha >= 0.98 && node.alpha <= 0.99   {
+        if node.alpha >= 0.97 && node.alpha <= 0.98   {
             bulletNumber += 1
             if (bulletNumber > 3){
                 bulletNumber = 3
@@ -761,7 +786,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 fireRate += 0.3
             }
         }
-        if node.alpha >= 0.97 && node.alpha <= 0.98  {
+        if node.alpha >= 0.98 && node.alpha <= 0.99  {
             playerShield = true
         }
         if node.alpha >= 0.96 && node.alpha <= 0.97  {
@@ -788,7 +813,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         object.removeFromParent()
         score += 3
         
-        if (arc4random_uniform(1) == 0){
+        if (arc4random_uniform(4) == 0){
             var powerUpLevel = 1
             if(score > 50) {powerUpLevel = 2;}
             if(score > 100) {powerUpLevel = 3;}
