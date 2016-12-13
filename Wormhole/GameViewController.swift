@@ -9,6 +9,7 @@
 import UIKit
 import SpriteKit
 import GameplayKit
+import AVFoundation
 
 class GameViewController: UIViewController {
     
@@ -18,9 +19,22 @@ class GameViewController: UIViewController {
     let showDebugData = false
     var screenSize = CGSize(width: 1080, height: 1920)
     let scaleMode = SKSceneScaleMode.aspectFill
+    var player: AVAudioPlayer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let url = Bundle.main.url(forResource: "background", withExtension: "mp3")
+        
+        do {
+            player = try AVAudioPlayer(contentsOf: url!)
+            guard let player = player else {return}
+            
+            player.prepareToPlay()
+            player.play()
+        } catch let error as Error {
+            print(error)
+        }
         
         skView = self.view as! SKView
         loadHomeScene()

@@ -29,6 +29,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var player: SKNode!
     
     var pauseScreen: SKLabelNode!
+    var resumeLbl: SKLabelNode!
     
     var stop: Bool = false
     
@@ -41,7 +42,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var xAcceleration: CGFloat = 0.0
     
     // Labels for score
-    var score:Float = 499{
+    var score:Float = 0{
         didSet{
             lblScore.text = "Score: " + String(format: "%.2f", score)
             GameState.sharedInstance.score = score
@@ -71,14 +72,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     var lblHealth: SKLabelNode!
 
-    var lblShield: SKLabelNode!
     
+    
+    var shieldSprite = SKSpriteNode(imageNamed: "Shield");
     var playerShield:Bool = false {
         didSet{
             if (playerShield){
-                lblShield.text = "Shields: On"
+                shieldSprite.alpha = 1.0
             } else {
-                lblShield.text = "Shields: Off"
+                let disappear = SKAction.fadeAlpha(to: 0.0, duration: 0.0);
+                let reappear = SKAction.fadeAlpha(to: 1.0, duration: 0.0);
+                let wait = SKAction.wait(forDuration: 0.2);
+                let sequence = SKAction.sequence([reappear, wait, disappear, wait]);
+                
+                shieldSprite.run(SKAction.repeat(sequence, count: 3));
             }
         }
     }
@@ -110,6 +117,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
         super.didMove(to: view)
+        
+        shieldSprite.alpha = 0.0;
+        shieldSprite.size.width = 150
+        shieldSprite.size.height = 150
+        shieldSprite.zPosition = 10;
+
+        addChild(shieldSprite)
         
         let lbl1 = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
         lbl1.fontSize = 60
@@ -174,51 +188,79 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         player = createPlayer()
         addChild(player)
         
-        let moreAsteroids = SKAction.run{
+        let Asteroids = SKAction.run{
+            self.addAsteroid()
+        }
+        let moreAsteroids1 = SKAction.run{
+            if(self.score > 50){
                 self.addAsteroid()
-                if (self.score > 50){
-                    self.addAsteroid()
-                }
-                if (self.score > 200){
-                    self.addAsteroid()
-                }
+            }
+        }
+        let moreAsteroids2 = SKAction.run{
+            if(self.score > 200){
+                self.addAsteroid()
+            }
         }
         
         let moreAliens = SKAction.run{
+            self.addAliens()
+        }
+        let moreAliens1 = SKAction.run{
+            if (self.score > 100){
                 self.addAliens()
-                if (self.score > 100){
-                    self.addAliens()
-                }
-                if (self.score > 250){
-                    self.addAliens()
-                }
+            }
+        }
+        let moreAliens2 = SKAction.run{
+            if (self.score > 250){
+                self.addAliens()
+            }
         }
         
         let masterAlien = SKAction.run{
-            if (self.score > 500){
+            if (self.score > 500.0){
                 self.addMaster()
             }
         }
         
         run(SKAction.repeatForever(
             SKAction.sequence([
-                moreAsteroids,
+                SKAction.group([
+                    Asteroids,
+                    SKAction.sequence([
+                        SKAction.wait(forDuration: 1.5),
+                        moreAsteroids1
+                    ]),
+                    SKAction.sequence([
+                        SKAction.wait(forDuration: 3.0),
+                        moreAsteroids2
+                    ])
+                ]),
                 SKAction.wait(forDuration: 3.0)
-                ])
+            ])
         ))
         
         run(SKAction.repeatForever(
             SKAction.sequence([
-                moreAliens,
-                SKAction.wait(forDuration: 8.0)
-                ])
+                SKAction.group([
+                    moreAliens,
+                    SKAction.sequence([
+                        SKAction.wait(forDuration: 1.5),
+                        moreAliens1
+                        ]),
+                    SKAction.sequence([
+                        SKAction.wait(forDuration: 3.0),
+                        moreAliens2
+                        ])
+                    ]),
+                SKAction.wait(forDuration: 3.0)
+            ])
         ))
         
         
         run(SKAction.repeatForever(
             SKAction.sequence([
                 masterAlien,
-                SKAction.wait(forDuration: 250.0)
+                SKAction.wait(forDuration: 50.0)
                 ])
         ))
     
@@ -239,14 +281,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         pauseScreen.position = CGPoint(x: screenWidth/2, y: screenSize/2)
         pauseScreen.text = "PAUSED"
         
+        resumeLbl = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
+        resumeLbl.fontSize = 30
+        resumeLbl.fontColor = SKColor.white
+        resumeLbl.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.center
+        resumeLbl.position = CGPoint(x: screenWidth/2, y: screenSize/2 - 100)
+        resumeLbl.text = "Tap Anywhere To Resume"
+        
         // Score
         lblScore = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
-        lblScore.fontSize = 30
+        lblScore.fontSize = 20
         lblScore.fontColor = SKColor.cyan
         lblScore.position = CGPoint(x: 40, y: self.size.height * 19 / 20)
         lblScore.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
         
-        lblScore.text = "0"
+        lblScore.text = "200"
         addChild(lblScore)
         
         lblHealth = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
@@ -254,30 +303,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         lblHealth.fontColor = SKColor.red
         lblHealth.position = CGPoint(x: 80, y: self.size.height / 20)
         lblHealth.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
-        
+        lblHealth.zPosition = -2;
         lblHealth.text = "Health: 3"
         addChild(lblHealth)
-        
-        lblShield = SKLabelNode(fontNamed: "GurmukhiMN-Bold")
-        lblShield.fontSize = 30
-        lblShield.fontColor = SKColor.cyan
-        lblShield.position = CGPoint(x: 80, y: self.size.height / 20 - 40)
-        lblShield.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
-        
-        lblShield.text = "Shields: Off"
-        addChild(lblShield)
         
         // CoreMotion
         motionManager.accelerometerUpdateInterval = 0.2
         motionManager.startAccelerometerUpdates()
         
         if UIDevice.current.userInterfaceIdiom == UIUserInterfaceIdiom.pad {
-            lblShield.fontSize = 15
-            lblShield.position.x = 40
-            lblHealth.fontSize = 15
+            lblHealth.fontSize = 40
             lblHealth.position = CGPoint(x: 40, y: self.size.height / 20 - 20)
-            lblScore.fontSize = 20
-            pause.fontSize = 20
+            lblScore.fontSize = 30
+            pause.fontSize = 50
         }
     
         
@@ -287,7 +325,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func createPlayer() -> SKNode {
         let playerNode = SKNode()
         playerNode.position = CGPoint(x: self.size.width / 2, y: self.size.height / 20)
-        
+        shieldSprite.position = playerNode.position
         let sprite = SKSpriteNode(imageNamed: "Player")
         playerNode.name = "player"
         //sprite.xScale = 0.25
@@ -455,7 +493,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func createMasterBullet(node: SKNode){
         if self.speed != 0{
-            let bullet = SKSpriteNode(imageNamed: "bullet")
+            let bullet = SKSpriteNode(imageNamed: "laser")
             
             if(masterBulletsFired > 10){
                 masterBulletsFired = 0
@@ -478,8 +516,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
             
             bullet.zPosition = -4
-            bullet.xScale = 0.125
-            bullet.yScale = -0.125
+            bullet.xScale = 1
+            bullet.yScale = 0.5
             bullet.physicsBody = SKPhysicsBody(circleOfRadius: bullet.size.width/2)
             
             bullet.physicsBody?.isDynamic = true
@@ -499,13 +537,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func createEnemyBullet(node: SKNode){
         if self.speed != 0{
-            let bullet = SKSpriteNode(imageNamed: "bullet")
+            let bullet = SKSpriteNode(imageNamed: "laser")
             
             bullet.position = node.position
             //bullet.position.y = bullet.position.y - 200
             bullet.zPosition = -4
-            bullet.xScale = 0.125
-            bullet.yScale = -0.125
+            bullet.xScale = 1
+            bullet.yScale = 0.5
             bullet.physicsBody = SKPhysicsBody(circleOfRadius: bullet.size.width/2)
             
             bullet.physicsBody?.isDynamic = true
@@ -518,7 +556,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             let point = CGPoint(x: node.position.x, y: node.position.x - self.size.height)
             bullet.name = "EnemyProjectile"
-            let actionMove = SKAction.move(to: point, duration: 2.0)
+            let actionMove = SKAction.move(to: point, duration: 3.0)
             let actionMoveDone = SKAction.removeFromParent()
             bullet.run(SKAction.sequence([actionMove, actionMoveDone]))
         }
@@ -626,7 +664,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func addMaster(){
         if self.speed != 0{
             
-            let master = SKSpriteNode(imageNamed: "alien1")
+            let master = SKSpriteNode(imageNamed: "alien3")
             
             master.zPosition = 30
             master.xScale = 4
@@ -648,7 +686,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             addChild(master)
             
             // Create the actions
-            let actualDuration = 4
             
             let actionShoot = SKAction.run {
                 self.createMasterBullet(node: master)
@@ -729,8 +766,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let touch = touches.first
         let point = touch?.location(in: self.view)
         
-        //Did mean to Pause?
-        if (point?.y)! < CGFloat(50.0) {
+        //We are paused so resume
+        if(self.speed == 0){
+            pauseMe()
+        } else if (point?.y)! < CGFloat(60.0) { //Did we mean to pause
             pauseMe()
         }
         playerFiring = true
@@ -746,6 +785,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if self.speed == 0 {
             physicsWorld.speed = 1
             pauseScreen.removeFromParent()
+            resumeLbl.removeFromParent()
             starEmitter.isPaused = false
             self.speed = 1
         } else {
@@ -753,6 +793,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             //Pause, Add Paused Label
             physicsWorld.speed = 0
             addChild(pauseScreen)
+            addChild(resumeLbl)
             starEmitter.isPaused = true
         }
     }
@@ -771,10 +812,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         if let accelerometerData = motionManager.accelerometerData {
             var acceleration = accelerometerData.acceleration.x
-            acceleration = acceleration < -0.2 ? -0.2 : acceleration
-            acceleration = acceleration > 0.2 ? 0.2 : acceleration
+            acceleration = acceleration < -0.33 ? -0.33 : acceleration
+            acceleration = acceleration > 0.33 ? 0.33 : acceleration
             
-            acceleration = acceleration * 5
+            acceleration = acceleration * 3
             
             if (abs(acceleration) < 0.1){
                 acceleration = 0
@@ -782,6 +823,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             self.xAcceleration = CGFloat(acceleration) + (self.xAcceleration * 0.25)
         }
+        
+        shieldSprite.position = player.position
         
         // spawn gameObjects on screen
         
@@ -818,7 +861,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
                 } else {
                     secondBody.node?.removeFromParent()
-                    score += 30
+                    score += 5
                 }
             }else if firstBody.node?.name == "Asteroid"{
                 projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
@@ -833,14 +876,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 if bulletNumber < 1 {
                  bulletNumber = 1
                 }
-            fireRate += 0.1
             run(SKAction.playSoundFileNamed("damaged.mp3", waitForCompletion: false))
             secondBody.node?.removeFromParent()
+            playerFlashes()
             if playerHealth == 0{
                 endGame()
             }
             } else {
                 playerShield = false
+                secondBody.node?.removeFromParent()
             }
         }
         
@@ -853,14 +897,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 if bulletNumber < 1 {
                     bulletNumber = 1
                 }
-                fireRate += 0.1
                 run(SKAction.playSoundFileNamed("damaged.mp3", waitForCompletion: false))
                 secondBody.node?.removeFromParent()
+                playerFlashes()
                 if playerHealth == 0{
                     endGame()
                 }
               } else {
                 playerShield = false
+                secondBody.node?.removeFromParent()
               }
             }
         }
@@ -880,9 +925,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         if node.alpha >= 0.99 && node.alpha < 1 {
-            fireRate -= 0.05
-            if fireRate < 0.05 {
-                fireRate = 0.05
+            fireRate -= 0.1
+            if fireRate < 0.1 {
+                fireRate = 0.1
             }
         }
         if node.alpha >= 0.97 && node.alpha <= 0.98   {
@@ -940,6 +985,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if (player.position.x > self.size.width - 20.0) {
             player.position = CGPoint(x: self.size.width - 20.0, y: player.position.y)
         }
+    }
+    
+    func playerFlashes(){
+        let disappear = SKAction.fadeAlpha(to: 0.0, duration: 0.0);
+        let reappear = SKAction.fadeAlpha(to: 1.0, duration: 0.0);
+        let wait = SKAction.wait(forDuration: 0.2);
+        let sequence = SKAction.sequence([disappear, wait, reappear, wait]);
+        
+        player.run(SKAction.repeat(sequence, count: 3));
     }
     
     
