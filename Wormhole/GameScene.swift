@@ -41,7 +41,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var xAcceleration: CGFloat = 0.0
     
     // Labels for score
-    var score:Float = 0{
+    var score:Float = 499{
         didSet{
             lblScore.text = "Score: " + String(format: "%.2f", score)
             GameState.sharedInstance.score = score
@@ -84,6 +84,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     var bulletNumber: Int = 1
+    
+    var masterBulletsFired: Float = 0
+    var pattern: Int = 0
     
     // To Accommodate iPhone 6
     var scaleFactor: CGFloat!
@@ -172,22 +175,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(player)
         
         let moreAsteroids = SKAction.run{
-            self.addAsteroid()
-            if (self.score > 50){
                 self.addAsteroid()
-            }
-            if (self.score > 200){
-                self.addAsteroid()
-            }
+                if (self.score > 50){
+                    self.addAsteroid()
+                }
+                if (self.score > 200){
+                    self.addAsteroid()
+                }
         }
         
         let moreAliens = SKAction.run{
-            self.addAliens()
-            if (self.score > 100){
                 self.addAliens()
-            }
-            if (self.score > 250){
-                self.addAliens()
+                if (self.score > 100){
+                    self.addAliens()
+                }
+                if (self.score > 250){
+                    self.addAliens()
+                }
+        }
+        
+        let masterAlien = SKAction.run{
+            if (self.score > 500){
+                self.addMaster()
             }
         }
         
@@ -202,6 +211,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             SKAction.sequence([
                 moreAliens,
                 SKAction.wait(forDuration: 8.0)
+                ])
+        ))
+        
+        
+        run(SKAction.repeatForever(
+            SKAction.sequence([
+                masterAlien,
+                SKAction.wait(forDuration: 250.0)
                 ])
         ))
     
@@ -436,6 +453,50 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    func createMasterBullet(node: SKNode){
+        if self.speed != 0{
+            let bullet = SKSpriteNode(imageNamed: "bullet")
+            
+            if(masterBulletsFired > 10){
+                masterBulletsFired = 0
+            }
+            if(masterBulletsFired == 0){
+                pattern = Int(random(min: 0, max: 2))
+            }
+            
+            let bulletXOffset = CGFloat(20 * masterBulletsFired)
+            var point:CGPoint = CGPoint(x:0,y:0)
+            
+            if pattern == 0{
+                bullet.position = CGPoint(x:node.position.x - bulletXOffset, y: node.position.y)
+                point = CGPoint(x: node.position.x - bulletXOffset, y: node.position.y - self.size.height)
+                masterBulletsFired += 1
+            }else if pattern == 1{
+                bullet.position = CGPoint(x:node.position.x + bulletXOffset, y: node.position.y)
+                point = CGPoint(x: node.position.x + bulletXOffset, y: node.position.y - self.size.height)
+                masterBulletsFired += 1
+            }
+            
+            bullet.zPosition = -4
+            bullet.xScale = 0.125
+            bullet.yScale = -0.125
+            bullet.physicsBody = SKPhysicsBody(circleOfRadius: bullet.size.width/2)
+            
+            bullet.physicsBody?.isDynamic = true
+            bullet.physicsBody?.categoryBitMask = PhysicsCategory.EnemyProjectile
+            bullet.physicsBody?.contactTestBitMask = PhysicsCategory.Player
+            bullet.physicsBody?.collisionBitMask = PhysicsCategory.None
+            bullet.physicsBody?.usesPreciseCollisionDetection = true
+            
+            addChild(bullet)
+            
+            bullet.name = "EnemyProjectile"
+            let actionMove = SKAction.move(to: point, duration: 2.0)
+            let actionMoveDone = SKAction.removeFromParent()
+            bullet.run(SKAction.sequence([actionMove, actionMoveDone]))
+        }
+    }
+    
     func createEnemyBullet(node: SKNode){
         if self.speed != 0{
             let bullet = SKSpriteNode(imageNamed: "bullet")
@@ -559,6 +620,44 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         asteroid.physicsBody?.contactTestBitMask = PhysicsCategory.Projectile // 4
         asteroid.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
       }
+    }
+    
+    // add master alien 
+    func addMaster(){
+        if self.speed != 0{
+            
+            let master = SKSpriteNode(imageNamed: "alien1")
+            
+            master.zPosition = 30
+            master.xScale = 4
+            master.yScale = 2
+            
+            master.name = "Master"
+            
+            master.physicsBody = SKPhysicsBody(rectangleOf: master.size) // 1
+            master.physicsBody?.isDynamic = false // 2
+            master.physicsBody?.categoryBitMask = PhysicsCategory.Enemy // 3
+            master.physicsBody?.contactTestBitMask = PhysicsCategory.Projectile // 4
+            master.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
+            
+            // Position the monster slightly off-screen along the right edge,
+            // and along a random position along the Y axis as calculated above
+            master.position = CGPoint(x: size.width/2, y: size.height + master.size.height)
+            
+            // Add the monster to the scene
+            addChild(master)
+            
+            // Create the actions
+            let actualDuration = 4
+            
+            let actionShoot = SKAction.run {
+                self.createMasterBullet(node: master)
+            }
+            
+            let actionMove = SKAction.move(to: CGPoint(x: size.width/2, y: size.height - master.size.height/2), duration: 3.0)
+            
+            master.run(SKAction.group([SKAction.repeatForever(actionMove), SKAction.repeatForever( SKAction.sequence([actionShoot, SKAction.wait(forDuration: 0.5)]))]))
+        }
     }
     
     // add aliens
@@ -712,6 +811,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 } else {
                     secondBody.node?.removeFromParent()
                     score += 3
+                }
+            }else if firstBody.node?.name == "Master"{
+                firstBody.node?.zPosition -= 1
+                if (firstBody.node?.zPosition)! <= CGFloat(0.0) {
+                    projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
+                } else {
+                    secondBody.node?.removeFromParent()
+                    score += 30
                 }
             }else if firstBody.node?.name == "Asteroid"{
                 projectileDidCollideWithMonster(firstBody.node as! SKSpriteNode, object: secondBody.node as! SKSpriteNode)
